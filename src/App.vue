@@ -1,36 +1,12 @@
 <!-- src/App.vue -->
 
 <template>
-  <div>
-    <div class="game-board">
-      <div v-for="(row, rowIndex) in matrix" :key="rowIndex" class="board-row">
-        <div
-          v-for="(cell, cellIndex) in row"
-          :key="cellIndex"
-          class="board-cell"
-        >
-          <!-- Display player at the current position -->
-          <div v-if="isPlayerAt(cell.x, cell.y)" class="player"></div>
-          <!-- Display bombs at their positions -->
-          <div
-            v-for="(bomb, bombIndex) in filteredBombs(cell.x, cell.y)"
-            :key="'bomb-' + bombIndex"
-            class="bomb"
-          ></div>
-        </div>
-      </div>
-    </div>
-    <div>
-      <button @click="movePlayer('up')">Up</button>
-    </div>
-    <div>
-      <button @click="movePlayer('left')">Left</button>
-      <button @click="placeBomb">Place Bomb</button>
-      <button @click="movePlayer('right')">Right</button>
-    </div>
-    <div>
-      <button @click="movePlayer('down')">Down</button>
-    </div>
+  <div @keydown="handleKeyPress" tabindex="0">
+    <GameBoard
+      :matrix="matrix"
+      :isPlayerAt="isPlayerAt"
+      :filteredBombs="filteredBombs"
+    />
     <div>
       <p>Player Position: {{ playerPosition.x }}, {{ playerPosition.y }}</p>
       <p>Bombs: {{ bombs.length }}</p>
@@ -39,15 +15,37 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from "vue";
+import GameBoard from "./components/GameBoard.vue";
+
+export default defineComponent({
   data() {
     return {
       playerPosition: { x: 0, y: 0 },
       bombs: [],
-      matrix: this.createMatrix(10, 10), // Adjust the size of the matrix as needed
+      matrix: this.createMatrix(10, 10),
     };
   },
   methods: {
+    handleKeyPress(event) {
+      switch (event.key) {
+        case "ArrowUp":
+          this.movePlayer("up");
+          break;
+        case "ArrowDown":
+          this.movePlayer("down");
+          break;
+        case "ArrowLeft":
+          this.movePlayer("left");
+          break;
+        case "ArrowRight":
+          this.movePlayer("right");
+          break;
+        case " ":
+          this.placeBomb();
+          break;
+      }
+    },
     movePlayer(direction) {
       switch (direction) {
         case "up":
@@ -91,39 +89,20 @@ export default {
       return this.bombs.filter((bomb) => bomb.x === x && bomb.y === y);
     },
   },
-};
+  mounted() {
+    // Enable keyboard events on the entire document
+    document.addEventListener("keydown", this.handleKeyPress);
+  },
+  beforeUnmount() {
+    // Remove event listener when component is destroyed to avoid memory leaks
+    document.removeEventListener("keydown", this.handleKeyPress);
+  },
+  components: {
+    GameBoard,
+  },
+});
 </script>
 
 <style>
-.game-board {
-  display: flex;
-  flex-direction: column;
-  /*display: grid; */
-  grid-template-columns: repeat(10, 100px); /* Each column is 100 pixels wide */
-  grid-template-rows: repeat(10, 100px); /* Each row is 100 pixels tall */
-  grid-gap: 2px;
-}
-
-.board-row {
-  display: flex;
-}
-
-.board-cell {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #ccc;
-  position: relative;
-}
-
-.player {
-  width: 100%;
-  height: 100%;
-  background-color: #00f; /* Blue color for the player */
-}
-
-.bomb {
-  width: 100%;
-  height: 100%;
-  background-color: #f00; /* Red color for bombs */
-}
+/* Add global styles if needed */
 </style>
